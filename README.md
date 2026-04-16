@@ -67,10 +67,10 @@ Egress traffic from the Server(s) located in the private subnet in Customer VPC 
 ## Deployment
 To deploy the FortiGate-VMs to AWS:
 1. Clone the repository.
-2. Customize variables in the `terraform.tfvars.example` and `variables.tf` file as needed.  And rename `terraform.tfvars.example` to `terraform.tfvars`.
+2. Customize variables in the `terraform.tfvars.example` and `variables.tf` file as needed. And rename `terraform.tfvars.example` to `terraform.tfvars`.
 > [!NOTE]    
 > In the license_format variable, there are two different choices.   
-> Either token or file.  Token is FortiFlex token, and file is FortiGate-VM license file.
+> Either token or file. Token is FortiFlex token, and file is FortiGate-VM license file.
 3. Initialize the providers and modules:
    ```sh
    $ cd XXXXX
@@ -87,22 +87,41 @@ To deploy the FortiGate-VMs to AWS:
    ```
 7. If output is satisfactory, type `yes`.
 
+### Customer VPC Deployment Control
+
+Use the `deploy_customer_vpc` variable to control whether Customer VPC resources are deployed:
+
+**For Testing/Development (deploy_customer_vpc = true):**
+- Deploys both FGT VPC and Customer VPC with Apache web server
+- Useful for verifying GWLB traffic routing
+- Apache server serves as a test target for traffic inspection
+
+**For Production (deploy_customer_vpc = false):**
+- Deploys only FGT VPC with FortiGate VMs and GWLB
+- Skip this if Customer VPC already exists
+- Integrate with existing Customer VPC by configuring GWLB endpoints manually
+
+Example for production deployment:
+```sh
+$ terraform apply -var="deploy_customer_vpc=false"
+```
+
 Output will include the information necessary to log in to the FortiGate-VM instances:
 ```sh
 Outputs:
 
-CustomerVPC = <Customer VPC>
+CustomerVPC = <Customer VPC ID>              # Only when deploy_customer_vpc = true
 FGT1PublicIP = <FGT1 Public IP>
 FGT2PublicIP = <FGT2 Public IP>
 FGT3PublicIP = <FGT3 Public IP>
-FGTVPC = <FGT VPC>
+FGTVPC = <FGT VPC ID>
 LoadBalancerPrivateIP = <Private Load Balancer IP>
 Password_for_FGT1 = <FGT1 Password>
 Password_for_FGT2 = <FGT2 Password>
 Password_for_FGT3 = <FGT3 Password>
 Username = <FGT Username>
-ApacheServerPublicIP = <Apache Server Public IP>
-ApacheServerPrivateIP = <Apache Server Private IP>
+ApacheServerPublicIP = <Apache Server Public IP>   # Only when deploy_customer_vpc = true
+ApacheServerPrivateIP = <Apache Server Private IP> # Only when deploy_customer_vpc = true
 
 ```
 
