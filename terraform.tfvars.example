@@ -1,3 +1,79 @@
 // AWS Environment
 access_key = "<AWS access key>"
 secret_key = "<AWS secret key>"
+
+// Region and Availability Zones
+region = "ap-east-1"
+az1    = "ap-east-1a"
+az2    = "ap-east-1b"
+az3    = "ap-east-1c"
+
+// ============================================
+// Customer VPC Deployment Control
+// ============================================
+// Set to true for testing/development environments where you need
+// the Customer VPC with Apache web server to verify GWLB traffic routing.
+//
+// Set to false for production environments where:
+// - Customer VPC already exists, OR
+// - You only want to deploy the FortiGate GWLB infrastructure
+//
+// When set to false, only the FGT VPC with 3 FortiGate VMs and GWLB
+// will be deployed. No Customer VPC resources will be created.
+deploy_customer_vpc = true
+
+// ============================================
+// FGT VPC Configuration (Security VPC)
+// ============================================
+vpccidr        = "10.1.0.0/16"
+publiccidraz1  = "10.1.0.0/24"
+privatecidraz1 = "10.1.1.0/24"
+publiccidraz2  = "10.1.2.0/24"
+privatecidraz2 = "10.1.3.0/24"
+publiccidraz3  = "10.1.4.0/24"
+privatecidraz3 = "10.1.5.0/24"
+
+// ============================================
+// Customer VPC Configuration
+// (Only used when deploy_customer_vpc = true)
+// ============================================
+csvpccidr          = "20.1.0.0/16"
+cspubliccidraz1    = "20.1.0.0/24"
+csprivatecidraz1   = "20.1.1.0/24"
+cspubliccidraz2    = "20.1.2.0/24"
+csprivatecidraz2   = "20.1.3.0/24"
+cspubliccidraz3    = "20.1.4.0/24"
+csprivatecidraz3   = "20.1.5.0/24"
+
+// ============================================
+// FortiGate VM Configuration
+// ============================================
+// License type: "byol" or "payg"
+license_type = "byol"
+
+// License format: "file" or "token"
+license_format = "file"
+
+// Instance architecture: "arm" or "x86"
+arch = "arm"
+
+// Instance type (must match architecture)
+// c8g.xlarge for arm, c5.xlarge for x86
+size = "c8g.xlarge"
+
+// SSH key name (must exist in AWS)
+keyname = "aws-demo-hk"
+
+// Admin HTTPS port for FortiGate
+adminsport = "443"
+
+// Bootstrap configuration file
+bootstrap-fgtvm = "fgtvm.conf"
+
+// License files (must exist locally when license_format = "file")
+// Provide paths to valid FortiGate VM license files
+licenses = [
+  "fgt1.lic",
+  "fgt2.lic",
+  "fgt3.lic"
+]
