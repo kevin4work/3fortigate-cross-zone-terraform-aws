@@ -1,8 +1,14 @@
-// AWS Environment
-access_key = "<AWS access key>"
-secret_key = "<AWS secret key>"
+// ============================================
+// AWS SSO Profile Configuration
+// ============================================
+// This configuration uses AWS SSO profile for authentication.
+// Ensure you have logged in with: aws sso login --profile fortinet-admin
+//
+// To use a different SSO profile, update provider.tf accordingly.
 
+// ============================================
 // Region and Availability Zones
+// ============================================
 region = "ap-east-1"
 az1    = "ap-east-1a"
 az2    = "ap-east-1b"

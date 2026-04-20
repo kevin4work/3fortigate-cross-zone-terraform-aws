@@ -8,6 +8,7 @@ A Terraform script to deploy three FortiGate-VMs in three different AZs on AWS w
 * Terraform Provider Template >= 2.2.0
 * Terraform Provider Null >= 3.2.0
 * FOS Version >= 6.4.4
+* AWS CLI configured with SSO profile (`aws sso login --profile fortinet-admin`)
 
 ## Deployment overview
 Terraform deploys the following components:
@@ -27,8 +28,17 @@ Terraform deploys the following components:
      - Three GENEVE interfaces will be created base on port2 during bootstrap and this will be the interface where traffic will received from the Gateway Load Balancer.
    * Two Network Security Group rules: one for external, one for internal.
    * One Gateway Load Balancer with three targets to three FortiGates (one per AZ).
-   * One Apache web server in Customer VPC private subnet for testing traffic routing through GWLB.
    * Optional: Customer VPC deployment can be skipped by setting `deploy_customer_vpc = false`
+
+### AWS SSO Authentication
+
+This project uses AWS SSO profile for authentication. Before deploying:
+
+1. Ensure AWS CLI is configured with your SSO profile
+2. Login with: `aws sso login --profile fortinet-admin`
+3. Verify credentials: `aws sts get-caller-identity --profile fortinet-admin`
+
+To use a different SSO profile, update the `profile` setting in `provider.tf`.
 
 
 ## Topology overview
@@ -66,8 +76,15 @@ Egress traffic from the Server(s) located in the private subnet in Customer VPC 
 
 ## Deployment
 To deploy the FortiGate-VMs to AWS:
-1. Clone the repository.
-2. Customize variables in the `terraform.tfvars.example` and `variables.tf` file as needed. And rename `terraform.tfvars.example` to `terraform.tfvars`.
+
+1. **Login with AWS SSO:**
+   ```sh
+   aws sso login --profile fortinet-admin
+   ```
+
+2. Clone the repository.
+
+3. Customize variables in the `terraform.tfvars.example` and `variables.tf` file as needed. And rename `terraform.tfvars.example` to `terraform.tfvars`.
 > [!NOTE]    
 > In the license_format variable, there are two different choices.   
 > Either token or file. Token is FortiFlex token, and file is FortiGate-VM license file.
