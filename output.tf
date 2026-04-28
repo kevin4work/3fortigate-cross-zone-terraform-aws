@@ -29,8 +29,16 @@ output "Password_for_FGT3" {
   value = aws_instance.fgtvm3.id
 }
 
-output "LoadBalancerPrivateIP" {
+output "LoadBalancerPrivateIPAZ1" {
   value = data.aws_network_interface.vpcendpointip.private_ip
+}
+
+output "LoadBalancerPrivateIPAZ2" {
+  value = data.aws_network_interface.vpcendpointipaz2.private_ip
+}
+
+output "LoadBalancerPrivateIPAZ3" {
+  value = data.aws_network_interface.vpcendpointipaz3.private_ip
 }
 
 output "CustomerVPC" {

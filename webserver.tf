@@ -8,6 +8,7 @@ resource "null_resource" "fgtvm_ready" {
     aws_instance.fgtvm2,
     aws_instance.fgtvm3
   ]
+  count         = var.deploy_customer_vpc ? 1 : 0
 
   provisioner "local-exec" {
     command = "sleep 180"  # Wait 3 minutes for FortiGate VMs to fully boot and configure

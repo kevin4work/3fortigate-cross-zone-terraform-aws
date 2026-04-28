@@ -51,7 +51,7 @@ data "aws_network_interface" "eth1-2" {
 
 //
 data "aws_network_interface" "vpcendpointip" {
-  depends_on = [aws_vpc_endpoint.gwlbendpoint]
+  depends_on = [aws_vpc_endpoint_service.fgtgwlbservice]
   filter {
     name   = "vpc-id"
     values = ["${aws_vpc.fgtvm-vpc.id}"]
@@ -71,7 +71,7 @@ data "aws_network_interface" "vpcendpointip" {
 }
 
 data "aws_network_interface" "vpcendpointipaz2" {
-  depends_on = [aws_vpc_endpoint.gwlbendpoint]
+  depends_on = [aws_vpc_endpoint_service.fgtgwlbservice]
   filter {
     name   = "vpc-id"
     values = ["${aws_vpc.fgtvm-vpc.id}"]
@@ -91,7 +91,7 @@ data "aws_network_interface" "vpcendpointipaz2" {
 }
 
 data "aws_network_interface" "vpcendpointipaz3" {
-  depends_on = [aws_vpc_endpoint.gwlbendpoint]
+  depends_on = [aws_vpc_endpoint_service.fgtgwlbservice]
   filter {
     name   = "vpc-id"
     values = ["${aws_vpc.fgtvm-vpc.id}"]
