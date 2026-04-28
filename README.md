@@ -8,6 +8,7 @@ A Terraform script to deploy three FortiGate-VMs in three different AZs on AWS w
 * Terraform Provider Template >= 2.2.0
 * Terraform Provider Null >= 3.2.0
 * FOS Version >= 6.4.4
+* Create an ssh key for FortiGate VM, update the keyname in terraform.tfvars
 * AWS CLI configured with SSO profile (`aws sso login --profile fortinet-admin`) or switch to use accesskey secretkey in provider
 
 ## Deployment overview
