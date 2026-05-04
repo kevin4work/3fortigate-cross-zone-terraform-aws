@@ -474,3 +474,54 @@ variable "licenses" {
   type    = list(string)
   default = ["fgt1.lic", "fgt2.lic", "fgt3.lic"]
 }
+
+// ============================================
+// Syslog Proxy Configuration
+// ============================================
+variable "deploy_syslog_proxy" {
+  description = "Deploy syslog proxy VM for FortiGate log collection"
+  type        = bool
+  default     = false
+}
+
+variable "syslog_instance_type" {
+  description = "Instance type for syslog proxy VM (x86_64 for Amazon Linux 2023)"
+  type        = string
+  default     = "t3.micro"
+}
+
+variable "syslog_subnet_cidr" {
+  description = "CIDR for dedicated syslog proxy subnet (must not overlap existing subnets)"
+  type        = string
+  default     = "10.1.6.0/28"
+}
+
+variable "syslog_s3_bucket_name" {
+  description = "Cross-account S3 bucket name for log storage"
+  type        = string
+  default     = ""
+}
+
+variable "syslog_s3_bucket_region" {
+  description = "S3 bucket region"
+  type        = string
+  default     = "ap-east-1"
+}
+
+variable "syslog_target_account_id" {
+  description = "AWS account ID that owns the cross-account S3 bucket"
+  type        = string
+  default     = ""
+}
+
+variable "syslog_cross_account_role_name" {
+  description = "IAM role name in target account for cross-account S3 access"
+  type        = string
+  default     = "SyslogLogUploader"
+}
+
+variable "syslog_upload_cron_schedule" {
+  description = "Cron schedule for log rotation and S3 upload"
+  type        = string
+  default     = "*/10 * * * *"
+}

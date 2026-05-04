@@ -83,3 +83,23 @@ licenses = [
   "fgt2.lic",
   "fgt3.lic"
 ]
+
+// ============================================
+// Syslog Proxy Configuration
+// ============================================
+// Deploy a syslog proxy VM in the Security VPC private subnet to collect
+// FortiGate logs and forward them to a cross-account S3 bucket.
+//
+// Requires manual setup in the target AWS account:
+// 1. Create an IAM role (default: SyslogLogUploader) with trust policy allowing
+//    this account's syslog-proxy-role to assume it
+// 2. Attach an inline policy granting s3:PutObject, s3:ListBucket, s3:DeleteObject
+//    on the target S3 bucket
+deploy_syslog_proxy          = false
+syslog_instance_type         = "t3.micro"
+syslog_subnet_cidr           = "10.1.6.0/28"
+syslog_s3_bucket_name        = "fgt-logs-123456789012"   # replace with actual bucket
+syslog_s3_bucket_region      = "ap-east-1"
+syslog_target_account_id     = "123456789012"            # replace with target account ID
+syslog_cross_account_role_name = "SyslogLogUploader"
+syslog_upload_cron_schedule  = "*/10 * * * *"

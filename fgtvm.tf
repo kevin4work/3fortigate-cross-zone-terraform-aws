@@ -166,6 +166,8 @@ data "cloudinit_config" "config1" {
       endpointip  = "${data.aws_network_interface.vpcendpointip.private_ip}"
       endpointip2 = "${data.aws_network_interface.vpcendpointipaz2.private_ip}"
       endpointip3 = "${data.aws_network_interface.vpcendpointipaz3.private_ip}"
+      syslog_proxy_ip = var.deploy_syslog_proxy ? aws_instance.syslog_proxy[0].private_ip : ""
+      fortigate_num = "1"
     })
   }
 
@@ -184,6 +186,10 @@ resource "aws_instance" "fgtvm" {
   key_name          = var.keyname
 
   user_data = data.cloudinit_config.config1.rendered
+
+  depends_on = [
+    aws_instance.syslog_proxy
+  ]
 
   root_block_device {
     volume_type = "gp2"
@@ -231,6 +237,8 @@ data "cloudinit_config" "config2" {
       endpointip  = "${data.aws_network_interface.vpcendpointip.private_ip}"
       endpointip2 = "${data.aws_network_interface.vpcendpointipaz2.private_ip}"
       endpointip3 = "${data.aws_network_interface.vpcendpointipaz3.private_ip}"
+      syslog_proxy_ip = var.deploy_syslog_proxy ? aws_instance.syslog_proxy[0].private_ip : ""
+      fortigate_num = "2"
     })
   }
 
@@ -249,6 +257,10 @@ resource "aws_instance" "fgtvm2" {
   key_name          = var.keyname
 
   user_data = data.cloudinit_config.config2.rendered
+
+  depends_on = [
+    aws_instance.syslog_proxy
+  ]
 
   root_block_device {
     volume_type = "gp2"
@@ -296,6 +308,8 @@ data "cloudinit_config" "config3" {
       endpointip  = "${data.aws_network_interface.vpcendpointip.private_ip}"
       endpointip2 = "${data.aws_network_interface.vpcendpointipaz2.private_ip}"
       endpointip3 = "${data.aws_network_interface.vpcendpointipaz3.private_ip}"
+      syslog_proxy_ip = var.deploy_syslog_proxy ? aws_instance.syslog_proxy[0].private_ip : ""
+      fortigate_num = "3"
     })
   }
 
@@ -314,6 +328,10 @@ resource "aws_instance" "fgtvm3" {
   key_name          = var.keyname
 
   user_data = data.cloudinit_config.config3.rendered
+
+  depends_on = [
+    aws_instance.syslog_proxy
+  ]
 
   root_block_device {
     volume_type = "gp2"

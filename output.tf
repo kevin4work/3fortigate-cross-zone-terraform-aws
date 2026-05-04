@@ -48,3 +48,19 @@ output "CustomerVPC" {
 output "FGTVPC" {
   value = aws_vpc.fgtvm-vpc.id
 }
+
+output "SyslogProxyPrivateIP" {
+  value       = var.deploy_syslog_proxy ? aws_instance.syslog_proxy[0].private_ip : null
+  description = "Private IP of syslog proxy (configure FortiGates to send logs here)"
+}
+
+output "SyslogProxyInstanceId" {
+  value       = var.deploy_syslog_proxy ? aws_instance.syslog_proxy[0].id : null
+  description = "Instance ID of syslog proxy"
+}
+
+output "SyslogProxyUserData" {
+  value       = local.syslog_proxy_user_data
+  description = "Rendered user_data script for the syslog proxy VM"
+  sensitive   = true
+}

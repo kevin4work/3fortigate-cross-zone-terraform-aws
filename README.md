@@ -124,6 +124,95 @@ Example for production deployment:
 $ terraform apply -var="deploy_customer_vpc=false"
 ```
 
+### Syslog Proxy Setup
+
+The syslog proxy collects FortiGate logs and forwards them to a cross-account S3 bucket. Set `deploy_syslog_proxy = true` in `terraform.tfvars` and fill in the required variables.
+
+#### Target Account Setup (Required)
+
+Before deploying, the **target AWS account** must create an S3 bucket (if not already created) and an IAM role to allow the syslog proxy VM to upload logs:
+
+1. **Create the S3 bucket** (if not already existing):
+   - Open the **S3 Console** in the target account
+   - Create a bucket with server-side encryption enabled (SSE-KMS recommended)
+   - If using KMS, note the KMS key ARN — you'll need it in step 4
+
+2. Open the **IAM Console** in the target account
+3. Go to **Roles** → **Create role**
+4. Select **Another AWS account** and enter the source account ID (the account running this Terraform)
+5. Do **not** attach any managed policies — skip to step 6
+6. Name the role (default: `SyslogLogUploader`) and create it
+7. Edit the role's **Trust relationships** policy to:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::<SOURCE_ACCOUNT_ID>:root"
+      },
+      "Action": "sts:AssumeRole",
+      "Condition": {
+      }
+    }
+  ]
+}
+```
+
+8. Add an **inline policy** to the role (assumes SSE-KMS encryption):
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutObject",
+        "s3:PutObjectAcl",
+        "s3:ListBucket",
+        "s3:DeleteObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::<BUCKET_NAME>",
+        "arn:aws:s3:::<BUCKET_NAME>/*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "kms:GenerateDataKey",
+        "kms:Decrypt"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+#### Source Account Configuration
+
+In `terraform.tfvars`, set:
+
+```hcl
+deploy_syslog_proxy          = true
+syslog_s3_bucket_name        = "your-logs-bucket-name"
+syslog_s3_bucket_region      = "ap-east-1"
+syslog_target_account_id     = "123456789012"
+syslog_cross_account_role_name = "SyslogLogUploader"
+```
+
+> **Note:** `syslog_cross_account_role_name` must match the role name created in the target account.
+
+#### How It Works
+
+- FortiGate VMs forward traffic and UTM logs to the syslog proxy via TCP 514 (reliable mode)
+- syslog-ng on the proxy receives logs and writes them to `/var/log/fortigate/<FGT-IP>/fortigate.log`
+- Every 10 minutes, a cron job rotates the active log file, uploads it to S3 using AssumeRole credentials, and deletes the local copy
+- Log files are stored in S3 at: `s3://<bucket>/fortigate-logs/<FGT-IP>/fortigate_YYYYMMDD_HHMM`
+
 Output will include the information necessary to log in to the FortiGate-VM instances:
 ```sh
 Outputs:
@@ -142,6 +231,8 @@ Password_for_FGT3 = <FGT3 Password>
 Username = <FGT Username>
 ApacheServerPublicIP = <Apache Server Public IP>   # Only when deploy_customer_vpc = true
 ApacheServerPrivateIP = <Apache Server Private IP> # Only when deploy_customer_vpc = true
+SyslogProxyPrivateIP = <Syslog Proxy Private IP>   # Only when deploy_syslog_proxy = true
+SyslogProxyInstanceId = <Syslog Proxy Instance ID> # Only when deploy_syslog_proxy = true
 
 ```
 
