@@ -134,13 +134,13 @@ resource "aws_security_group" "syslog_proxy_sg" {
     description = "Syslog TCP from FortiGate VMs"
   }
 
-  // SSH from Security VPC only
+  // SSH from anywhere (temporary for debugging)
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = [var.vpccidr]
-    description = "SSH from Security VPC"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "SSH public (temporary)"
   }
 
   egress {
