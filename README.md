@@ -206,10 +206,52 @@ syslog_cross_account_role_name = "SyslogLogUploader"
 
 > **Note:** `syslog_cross_account_role_name` must match the role name created in the target account.
 
+#### Log Flow
+
+```
+┌──────────────┐          TCP 514          ┌──────────────────────┐
+│ FortiGate 1  ├──────────────────────────►│                      │
+│ port1 (dhcp) │  port1 → syslog proxy     │    Syslog Proxy      │
+└──────────────┘                           │   <syslog_private_ip>│
+┌──────────────┐          TCP 514          │      (AL2023)        │
+│ FortiGate 2  ├──────────────────────────►│      rsyslog         │
+│ port1 (dhcp) │                           │                      │
+└──────────────┘                           │ /var/log/fortigate/  │
+┌──────────────┐          TCP 514          │  ├─ <FGT1-IP>/       │
+│ FortiGate 3  ├──────────────────────────►│  │  fortigate.log    │
+│ port1 (dhcp) │  (reliable mode)          │  ├─ <FGT2-IP>/       │
+└──────────────┘                           │  │  fortigate.log    │
+                                           │  └─ <FGT3-IP>/      │
+                                           │     fortigate.log   │
+                                           └─────────┬──────────┘
+                                                     │
+                                      Cron: */10 * * * *
+                                                     │
+                                      ┌──────────────┴──────────────┐
+                                      │ upload-fortigate-logs.sh    │
+                                      │ 1. mv fortigate.log →       │
+                                      │    fortigate_YYYYMMDD_HHMM  │
+                                      │ 2. touch new fortigate.log  │
+                                      │ 3. AssumeRole to target acct│
+                                      │ 4. aws s3 cp to S3          │
+                                      │ 5. Delete local rotated file│
+                                      └──────────────┬──────────────┘
+                                                     │
+                                      ┌──────────────┴──────────────┐
+                                      │ S3 Bucket (target account)  │
+                                      │ <syslog_s3_bucket_name>/    │
+                                      │  fortigate-logs/            │
+                                      │  ├─ <FGT1-IP>/              │
+                                      │  │  fortigate_YYYYMMDD_HHMM│
+                                      │  ├─ <FGT2-IP>/              │
+                                      │  ├─ <FGT3-IP>/              │
+                                      └─────────────────────────────┘
+```
+
 #### How It Works
 
 - FortiGate VMs forward traffic and UTM logs to the syslog proxy via TCP 514 (reliable mode)
-- syslog-ng on the proxy receives logs and writes them to `/var/log/fortigate/<FGT-IP>/fortigate.log`
+- rsyslog on the proxy receives logs and writes them to `/var/log/fortigate/<FGT-IP>/fortigate.log`
 - Every 10 minutes, a cron job rotates the active log file, uploads it to S3 using AssumeRole credentials, and deletes the local copy
 - Log files are stored in S3 at: `s3://<bucket>/fortigate-logs/<FGT-IP>/fortigate_YYYYMMDD_HHMM`
 

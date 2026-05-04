@@ -1,6 +1,6 @@
 #!/bin/bash
 # Syslog Proxy User Data - Amazon Linux 2023
-# Receives FortiGate logs via syslog-ng, rotates every 10 minutes,
+# Receives FortiGate logs via rsyslog, rotates every 10 minutes,
 # uploads to cross-account S3 via AssumeRole
 
 set -euo pipefail
@@ -16,51 +16,44 @@ ROLE_ARN="arn:aws:iam::$${TARGET_ACCOUNT_ID}:role/$${CROSS_ACCOUNT_ROLE}"
 
 # ---- 1. System Update and Package Installation ----
 dnf update -y
-dnf install -y syslog-ng awscli cronie
+dnf install -y rsyslog awscli cronie
 
 # ---- 2. Create Log Directory ----
 mkdir -p /var/log/fortigate
 chmod 0750 /var/log/fortigate
 
-# ---- 3. Configure syslog-ng ----
-cat > /etc/syslog-ng/syslog-ng.conf << 'SYSLOG_CONF'
-@version: 4.2
-@include "scl.conf"
+# ---- 3. Configure rsyslog ----
+cat > /etc/rsyslog.d/fortigate.conf << 'RSYSLOG_CONF'
+# Template: separate files per source IP (must be before ruleset)
+template(name="FortiGateLog" type="string"
+    string="/var/log/fortigate/%fromhost-ip%/fortigate.log"
+)
 
-source s_fortigate {
-    udp(
-        ip(0.0.0.0)
-        port(514)
-        flags(no-parse)
-    );
-    tcp(
-        ip(0.0.0.0)
-        port(514)
-        flags(no-parse)
-    );
-};
+# Ruleset for TCP input
+ruleset(name="fortigate") {
+    action(type="omfile"
+        dynaFile="FortiGateLog"
+        dirOwner="root"
+    )
+}
 
-destination d_fortigate {
-    file(
-        "/var/log/fortigate/$${SOURCEIP}/fortigate.log"
-        owner("root")
-        group("root")
-        perm(0640)
-        dir_perm(0750)
-        create_dirs(yes)
-    );
-};
+# Load UDP/TCP syslog input modules
+module(load="imudp")
+input(type="imudp" port="514")
 
-log {
-    source(s_fortigate);
-    destination(d_fortigate);
-    flags(flow-control);
-};
-SYSLOG_CONF
+module(load="imtcp")
+input(type="imtcp" port="514" ruleset="fortigate")
 
-# ---- 4. Enable and Start syslog-ng ----
-systemctl enable syslog-ng
-systemctl start syslog-ng
+# For UDP input: route all messages not from localhost
+$FileCreateMode 0640
+$DirCreateMode 0750
+$Umask 0037
+:fromhost-ip, !isequal, "127.0.0.1" ?FortiGateLog
+RSYSLOG_CONF
+
+# ---- 4. Enable and Start rsyslog ----
+systemctl enable rsyslog
+systemctl start rsyslog
 
 # ---- 5. Configure AWS CLI default region ----
 mkdir -p /root/.aws
@@ -93,9 +86,9 @@ CREDS=$$(aws sts assume-role \
     exit 1
 }
 
-export AWS_ACCESS_KEY_ID=$$(echo "$$CREDS" | cut -d' ' -f1)
-export AWS_SECRET_ACCESS_KEY=$$(echo "$$CREDS" | cut -d' ' -f2)
-export AWS_SESSION_TOKEN=$$(echo "$$CREDS" | cut -d' ' -f3)
+export AWS_ACCESS_KEY_ID=$(echo "$$CREDS" | cut -f1)
+export AWS_SECRET_ACCESS_KEY=$(echo "$$CREDS" | cut -f2)
+export AWS_SESSION_TOKEN=$(echo "$$CREDS" | cut -f3)
 
 # Rotate active log files and upload
 find "$${LOG_DIR}" -name "fortigate.log" -type f | while read -r logfile; do

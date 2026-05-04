@@ -108,12 +108,31 @@ resource "aws_security_group" "syslog_proxy_sg" {
   description = "Security group for syslog proxy"
   vpc_id      = aws_vpc.fgtvm-vpc.id
 
-  // Syslog UDP from FortiGate private subnets
+  // ICMP from FortiGate subnets (port1 public + port2 private)
+  ingress {
+    from_port   = -1
+    to_port     = -1
+    protocol    = "icmp"
+    cidr_blocks = [
+      var.publiccidraz1,
+      var.publiccidraz2,
+      var.publiccidraz3,
+      var.privatecidraz1,
+      var.privatecidraz2,
+      var.privatecidraz3,
+    ]
+    description = "ICMP from FortiGate VMs"
+  }
+
+  // Syslog UDP from FortiGate subnets (port1 public + port2 private)
   ingress {
     from_port   = 514
     to_port     = 514
     protocol    = "udp"
     cidr_blocks = [
+      var.publiccidraz1,
+      var.publiccidraz2,
+      var.publiccidraz3,
       var.privatecidraz1,
       var.privatecidraz2,
       var.privatecidraz3,
@@ -121,12 +140,15 @@ resource "aws_security_group" "syslog_proxy_sg" {
     description = "Syslog UDP from FortiGate VMs"
   }
 
-  // Syslog TCP from FortiGate private subnets
+  // Syslog TCP from FortiGate subnets (port1 public + port2 private)
   ingress {
     from_port   = 514
     to_port     = 514
     protocol    = "tcp"
     cidr_blocks = [
+      var.publiccidraz1,
+      var.publiccidraz2,
+      var.publiccidraz3,
       var.privatecidraz1,
       var.privatecidraz2,
       var.privatecidraz3,
